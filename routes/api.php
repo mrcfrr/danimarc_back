@@ -20,4 +20,5 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
 });
 
 Route::get('/documents', [DocumentsController::class, 'index']);
-Route::get('/documents/{filename}', [DocumentsController::class, 'download'])->where('filename', '.*');
+Route::get('/documents/download/{filename}', [DocumentsController::class, 'download']);
+Route::get('/documents/{path}', [DocumentsController::class, 'getDocument'])->where('path', '.*');
