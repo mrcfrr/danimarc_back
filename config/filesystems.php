@@ -13,7 +13,7 @@ return [
     |
     */
 
-    'default' => env('FILESYSTEM_DISK', 'local'),
+    'default' => env('FILESYSTEM_DISK', 'public'),
 
     /*
     |--------------------------------------------------------------------------
@@ -55,6 +55,15 @@ return [
             'use_path_style_endpoint' => env('AWS_USE_PATH_STYLE_ENDPOINT', false),
             'throw' => false,
         ],
+
+        'smb' => [
+            'driver' => 'smb',
+            'host' => env('SMB_HOST', '192.168.1.157'),
+            'username' => env('SMB_USERNAME', 'federico'),
+            'password' => env('SMB_PASSWORD', 'sammael'),
+            'workgroup' => env('SMB_WORKGROUP', ''),
+            'path' => 'public',
+        ]
 
     ],
 

@@ -21,4 +21,7 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
 
 Route::get('/documents', [DocumentsController::class, 'index']);
 Route::get('/documents/download/{filename}', [DocumentsController::class, 'download']);
-Route::get('/documents/{path}', [DocumentsController::class, 'getDocument'])->where('path', '.*');
+Route::get('/documents/{path}', [DocumentsController::class, 'getFolderStructure'])->where('path', '.*');
+Route::get('/generate-qrcode/{path?}', [DocumentsController::class, 'generateQrCode'])->where('path', '.*');
+
+Route::get('/check-permissions', [DocumentsController::class, 'checkPermissions']);
