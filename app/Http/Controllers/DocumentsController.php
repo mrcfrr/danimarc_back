@@ -48,6 +48,7 @@ class DocumentsController extends Controller
         // Se la directory esiste, esplora i file e le cartelle
         if($fullPath && is_dir($fullPath)){
             $files = scandir($fullPath);
+            $hasFiles = false;
 
             foreach($files as $file){
                 // Se il file è una cartella, aggiungi la cartella alla struttura
@@ -66,16 +67,25 @@ class DocumentsController extends Controller
                 // Se il file è una cartella, chiama la funzione ricorsivamente
                 if(is_dir($filePath)){
                     Log::info('Processing directory: ' . $filePath);
+
+                    $folderContents = $this->getFolderStructure($directory . '/' . $file);
                     $structure[] = [
                         'type' => 'directory',
                         'name' => $file,
                         'path' => $encodedPath,
-                        'contents' => $this->getFolderStructure($directory . '/' . $file),
-                        'qr_code' => $this->generateQrCode($encodedPath),
+                        'contents' => $folderContents,
                     ];
+
+                    if(!empty($folderContents)){
+                        $structure[count($structure) - 1]['qr_code'] = $this->generateQrCode($encodedPath);
+                    }
+
                     // Controlla se è un file
                 } elseif(is_file($filePath)) {
+
+                    $hasFiles = true;
                     $extension = pathinfo($filePath, PATHINFO_EXTENSION);
+
                     // Se il file ha una delle estensioni specificate, lo aggiunge alla struttura
                     if(in_array(strtolower($extension), ['jpg', 'jpeg', 'png', 'pdf'])){
                         Log::info('Adding file: ' . $filePath);
@@ -84,11 +94,16 @@ class DocumentsController extends Controller
                             'name' => $file,
                             'path' => $encodedPath,
                         ];
-                    }else {
+                    } else {
                         Log::info('File extension not supported: ' . $filePath);
                     }
                 }
             }
+
+            if($hasFiles && empty($directory)){
+                $structure['qr_code'] = $this->generateQrCode($directory);
+            }
+
             // Se il perscorso non è una directory valida, registra un errore nel log e ritorna una risposta json
         } else {
             Log::error('Directory non trovata: ' . $fullPath);
@@ -134,9 +149,11 @@ class DocumentsController extends Controller
 
         $qrCodePath = storage_path('app/public/qrcodes/' . md5($path) . '.png');
 
-        QrCode::format('png')
-                ->size(50)
+        if(!file_exists($qrCodePath)){
+            QrCode::format('png')
+                ->size(100)
                 ->generate(url('/documents?path=' . $path), $qrCodePath);
+        }
 
         $qrCodeUrl = asset('storage/qrcodes/' . md5($path) . '.png');
 
