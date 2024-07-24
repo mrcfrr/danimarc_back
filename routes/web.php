@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\NasController;
 
 /*
 |--------------------------------------------------------------------------
@@ -16,3 +17,7 @@ use Illuminate\Support\Facades\Route;
 Route::get('/', function () {
     return view('welcome');
 });
+
+Route::get('/nas', [NasController::class, 'index']);
+Route::get('/nas/download/{filename}', [NasController::class, 'download']);
+Route::get('/nas/check-permissions', [NasController::class, 'checkPermissions']);

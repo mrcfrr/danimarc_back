@@ -57,12 +57,17 @@ return [
         ],
 
         'smb' => [
-            'driver' => 'smb',
-            'host' => env('SMB_HOST', '192.168.1.157'),
-            'username' => env('SMB_USERNAME', 'federico'),
-            'password' => env('SMB_PASSWORD', 'sammael'),
-            'workgroup' => env('SMB_WORKGROUP', ''),
-            'path' => 'public',
+            'driver' => 'custom',
+            'via' => \App\Filesystem\SmbAdapter::class,
+            'host' => '192.168.1.223',
+            'username' => 'public',
+            'password' => '24D@nim@rc',
+            'share' => 'public',
+        ],
+
+        'nas' => [
+            'driver' => 'local',
+            'root' => 'Z:',
         ]
 
     ],

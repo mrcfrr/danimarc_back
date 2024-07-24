@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 use SimpleSoftwareIO\QrCode\Facades\QrCode;
 
 class DocumentsController extends Controller
@@ -13,7 +14,7 @@ class DocumentsController extends Controller
     public function __construct() // Inizializza il percorso di rete (networkPath) con il percorso UNC(universal naming convenction)
     {
         // Percorso della condivisione di rete
-        $this->networkPath = '\\\\127.0.0.1\\sharing_test\\';
+        $this->networkPath = '\\\\SRVNAS\\public\\';
     }
 
 
@@ -151,7 +152,7 @@ class DocumentsController extends Controller
 
         if(!file_exists($qrCodePath)){
             QrCode::format('png')
-                ->size(100)
+                ->size(300)
                 ->generate(url('/documents?path=' . $path), $qrCodePath);
         }
 
