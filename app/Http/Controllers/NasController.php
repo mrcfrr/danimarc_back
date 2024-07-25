@@ -4,17 +4,16 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Response;
 use SimpleSoftwareIO\QrCode\Facades\QrCode;
 
 class NasController extends Controller
 {
-    // Usa un percorso locale temporaneo per la simulazione
-    private $nasPath = 'C:\\nas_simulation\\public';
+    private $nasPath = '\\\\192.168.1.223\\public';
 
     public function index(Request $request)
     {
         $folderStructure = $this->getFolderStructure('');
+        
         return response()->json($folderStructure);
     }
 
@@ -32,7 +31,7 @@ class NasController extends Controller
             $files = scandir($fullPath);
             $hasFiles = false;
             foreach ($files as $file) {
-                if ($file === '.' || $file === '..') {
+                if ($file === '.' || $file === '..' || $file === '' || $file[0] === '.') {
                     continue;
                 }
 
@@ -61,7 +60,7 @@ class NasController extends Controller
 
             if ($hasFiles) {
                 $qrCodeUrl = $this->generateQrCode(rawurlencode($directory));
-                $structure['qr_code'] = $qrCodeUrl;
+                $structure[] = ['qr_code' => $qrCodeUrl];
             }
 
             Log::info('Folder structure: ' . json_encode($structure)); // Log the folder structure
