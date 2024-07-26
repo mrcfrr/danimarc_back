@@ -8,14 +8,18 @@ use SimpleSoftwareIO\QrCode\Facades\QrCode;
 
 class NasController extends Controller
 {
-    private $nasPath = '\\\\192.168.1.223\\public';
+    private $nasPath = 'C:\\nas_simulation\\public';
+
+    /* ----------------------------------------------------------------------------- */
 
     public function index(Request $request)
     {
         $folderStructure = $this->getFolderStructure('');
-        
+
         return response()->json($folderStructure);
     }
+
+    /* ----------------------------------------------------------------------------- */
 
     public function getFolderStructure($directory)
     {
@@ -46,7 +50,7 @@ class NasController extends Controller
                         'name' => $file,
                         'path' => $encodedPath,
                         'contents' => $contents,
-                        'qr_code' => $hasFilesInSubDir ? $this->generateQrCode($encodedPath) : null,
+                        'qr_code' => $hasFilesInSubDir ? $this->generateQrCode($encodedPath, $file) : null,
                     ];
                 } else {
                     $hasFiles = true;
@@ -58,8 +62,9 @@ class NasController extends Controller
                 }
             }
 
-            if ($hasFiles) {
-                $qrCodeUrl = $this->generateQrCode(rawurlencode($directory));
+            // Evita di generare un QR code per la cartella principale 'public'
+            if ($hasFiles && $directory !== '') {
+                $qrCodeUrl = $this->generateQrCode(rawurlencode($directory), basename($directory));
                 $structure[] = ['qr_code' => $qrCodeUrl];
             }
 
@@ -72,6 +77,8 @@ class NasController extends Controller
         }
     }
 
+    /* ----------------------------------------------------------------------------- */
+
     private function containsFiles($contents){
         foreach($contents as $item){
             if($item['type'] === 'file'){
@@ -80,6 +87,8 @@ class NasController extends Controller
         }
         return false;
     }
+
+    /* ----------------------------------------------------------------------------- */
 
     public function download($filename)
     {
@@ -109,11 +118,14 @@ class NasController extends Controller
         }
     }
 
-    public function generateQrCode($path)
+    /* ----------------------------------------------------------------------------- */
+
+    public function generateQrCode($path, $directoryName)
     {
         set_time_limit(0);
 
-        $qrCodePath = storage_path('app/public/qrcodes/' . md5($path) . '.png');
+        $qrCodeFileName = $directoryName . '.png';
+        $qrCodePath = storage_path('app/public/qrcodes/' . $qrCodeFileName);
 
         if (!file_exists($qrCodePath)) {
             QrCode::format('png')
@@ -121,12 +133,76 @@ class NasController extends Controller
                 ->generate(url('/nas?path=' . $path), $qrCodePath);
         }
 
-        $qrCodeUrl = asset('storage/qrcodes/' . md5($path) . '.png');
+        $qrCodeUrl = asset('storage/qrcodes/' . $qrCodeFileName);
 
         Log::info('Url qr code: ' . $qrCodeUrl);
 
         return $qrCodeUrl;
     }
+
+    /* ----------------------------------------------------------------------------- */
+
+    public function renameDirectory(Request $request)
+    {
+        $oldPath = $this->nasPath . '\\' . $request->input('oldPath');
+        $newPath = $this->nasPath . '\\' . $request->input('newPath');
+
+        if (rename($oldPath, $newPath)) {
+            $oldQrCodePath = storage_path('app/public/qrcodes/' . basename($oldPath) . '.png');
+            $newQrCodePath = storage_path('app/public/qrcodes/' . basename($newPath) . '.png');
+
+            if (file_exists($oldQrCodePath)) {
+                rename($oldQrCodePath, $newQrCodePath);
+            }
+
+            return response()->json(['success' => true]);
+        } else {
+            return response()->json(['success' => false, 'error' => 'Errore durante la rinomina della directory']);
+        }
+    }
+
+    /* ----------------------------------------------------------------------------- */
+
+    public function deleteDirectory(Request $request)
+    {
+        $path = $this->nasPath . '\\' . $request->input('path');
+
+        if ($this->deleteDir($path)) {
+            $qrCodePath = storage_path('app/public/qrcodes/' . basename($path) . '.png');
+
+            if (file_exists($qrCodePath)) {
+                unlink($qrCodePath);
+            }
+
+            return response()->json(['success' => true]);
+        } else {
+            return response()->json(['success' => false, 'error' => 'Errore durante l\'eliminazione della directory']);
+        }
+    }
+
+    /* ----------------------------------------------------------------------------- */
+
+    private function deleteDir($dirPath)
+    {
+        if (!is_dir($dirPath)) {
+            return false;
+        }
+
+        $files = array_diff(scandir($dirPath), ['.', '..']);
+
+        foreach ($files as $file) {
+            $filePath = $dirPath . DIRECTORY_SEPARATOR . $file;
+            if (is_dir($filePath)) {
+                $this->deleteDir($filePath);
+            } else {
+                unlink($filePath);
+            }
+        }
+
+        return rmdir($dirPath);
+    }
+
+    /* ----------------------------------------------------------------------------- */
 
     public function checkPermissions()
     {
