@@ -19,8 +19,6 @@ Route::get('/', function () {
 });
 
 Route::get('/nas', [NasController::class, 'index']);
-Route::post('/nas/rename-directory', [NasController::class, 'renameDirectory']);
-Route::post('/nas/delete-directory', [NasController::class, 'deleteDirectory']);
 
 
 Route::get('/nas/download/{filename}', [NasController::class, 'download']);
