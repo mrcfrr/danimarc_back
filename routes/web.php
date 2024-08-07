@@ -18,8 +18,10 @@ Route::get('/', function () {
     return view('welcome');
 });
 
+
 Route::get('/nas', [NasController::class, 'index']);
-
-
 Route::get('/nas/download/{filename}', [NasController::class, 'download']);
-Route::get('/nas/check-permissions', [NasController::class, 'checkPermissions']);
+Route::get('/nas/fetch-data', [NasController::class, 'fetchData']);
+Route::post('/api/generate-qr-code', [NasController::class, 'generateQRCode']);
+
+Route::post('/generate-qrcode', [NasController::class, 'generateQRCode']);
